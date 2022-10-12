@@ -59,15 +59,18 @@ struct Logbook {
 
 fn load_or_create_logbook() -> Logbook {
     let logbook_path = get_logbook_dir();
+
     let logbook = match fs::read_to_string(get_logbook_dir()) {
         Err(_) => {
-            println!("Could not open logbook, creating one.");
+            println!("Could not find logbook, creating one.");
+
             let mut file = fs::File::options()
                 .read(true)
                 .write(true)
                 .create(true)
                 .open(logbook_path.clone())
                 .expect("Could not create logbook file");
+
             let initial_state = Logbook {
                 created_at: SystemTime::now()
                     .duration_since(UNIX_EPOCH)
@@ -76,26 +79,32 @@ fn load_or_create_logbook() -> Logbook {
                     .to_string(),
                 projects: HashMap::new(),
             };
+
             file.write_all(
                 serde_json::to_string(&initial_state)
                     .expect("Could not initialize logbook")
                     .as_bytes(),
             )
             .expect("Could not init logbook");
+
             let mut buf = String::new();
+
             file.read_to_string(&mut buf)
                 .expect("Could not read logbook from file");
+
             serde_json::from_str(&buf).expect("Malformed logbook on init. This is a bug")
         }
         Ok(unserialized_logbook) => {
             serde_json::from_str(&unserialized_logbook).expect("Malformed logbook")
         }
     };
+
     logbook
 }
 
-fn write_to_logbook(contents: &str) -> Result<(), std::io::Error> {
+fn write_to_logbook(logbook: &Logbook) -> Result<(), std::io::Error> {
     let mut file = fs::File::create(get_logbook_dir()).expect("Could not open logbook file");
+    let contents = &serde_json::to_string(&logbook).expect("Could not serialize logbook");
     file.write_all(&contents.as_bytes())
 }
 
@@ -115,8 +124,7 @@ fn add_project(name: &str) {
         },
     );
 
-    write_to_logbook(&serde_json::to_string(&logbook).expect("Could not serialize logbook"))
-        .expect("Could not write contents")
+    write_to_logbook(&logbook).expect("Could not write contents")
 }
 
 fn add_log(project: &str, text: &str) {
@@ -134,14 +142,42 @@ fn add_log(project: &str, text: &str) {
             .to_string(),
         text: text.to_string(),
     });
-    write_to_logbook(&serde_json::to_string(&logbook).expect("Could not serialize logbook"))
-        .expect("Could not write contents");
-    println!("new logbook: {:#?}", logbook);
+    write_to_logbook(&logbook).expect("Could not write contents");
+    dbg!("new logbook: {:#?}", &logbook);
 }
 
-fn delete_log(project: &str, id: i32) {}
+fn delete_log(project: &str, id: usize) {
+    let mut logbook = load_or_create_logbook();
+    let project = logbook
+        .projects
+        .get_mut(project)
+        .expect("Nonexistent project");
 
-fn delete_project(name: &str) {}
+    if id >= project.logs.len() {
+        println!("Invalid ID.");
+        return;
+    }
+
+    // Remove the log
+    project.logs.remove(id);
+    // Re-assign IDs as now this vector has shifted,
+    // and all IDs beyond the removed one are invalid
+    // TODO: Find a better way to assign IDs to avoid this extra step?
+    // Might lead into a more complicated data structure conversation,
+    // but will avoid doing weird things for now
+}
+
+fn delete_project(name: &str) {
+    let mut logbook = load_or_create_logbook();
+    match logbook.projects.remove(name) {
+        Some(_) => {
+            println!("Project {} removed.", name)
+        }
+        None => {
+            println!("Could not find this project.")
+        }
+    }
+}
 
 fn main() {
     println!("{:#?}", load_or_create_logbook());

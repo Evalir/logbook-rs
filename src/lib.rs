@@ -171,11 +171,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_add() {
-        assert_eq!(2 + 2, 4);
-    }
-
-    #[test]
     fn test_add_project() {
         let mut logbook = Logbook::new();
         logbook.add_project("test");

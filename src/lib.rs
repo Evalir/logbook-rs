@@ -160,7 +160,7 @@ pub fn load_or_create_logbook(logbook_path: &str) -> Result<Logbook, std::io::Er
     logbook
 }
 
-fn write_changes(logbook: &Logbook, logbook_path: &str) -> Result<(), std::io::Error> {
+pub fn write_changes(logbook: &Logbook, logbook_path: &str) -> Result<(), std::io::Error> {
     let mut file = fs::File::create(logbook_path).expect("Could not open logbook file");
     let contents = &serde_json::to_string(&logbook).expect("Could not serialize logbook");
     file.write_all(&contents.as_bytes())

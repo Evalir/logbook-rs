@@ -51,6 +51,7 @@ impl Logbook {
 
     pub fn add_log(&mut self, project: &str, text: &str) {
         let project = self.projects.get_mut(project).expect("Nonexistent project");
+
         project.logs.push(Log {
             id: project.logs.len().into(),
             timestamp: SystemTime::now()
@@ -172,5 +173,41 @@ mod tests {
     #[test]
     fn test_add() {
         assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn test_add_project() {
+        let mut logbook = Logbook::new();
+        logbook.add_project("test");
+        assert!(logbook.projects.contains_key("test"))
+    }
+
+    #[test]
+    fn test_add_log() {
+        let mut logbook = Logbook::new();
+        logbook.add_project("test");
+        logbook.add_log("test", "entry n1");
+        let test_project = logbook.projects.get("test").unwrap();
+        assert_eq!(test_project.logs[0].id, 0);
+        assert_eq!(test_project.logs[0].text, "entry n1");
+    }
+
+    #[test]
+    fn test_remove_log() {
+        let mut logbook = Logbook::new();
+        logbook.add_project("test");
+        logbook.add_log("test", "entry n1");
+        logbook.delete_log("test", 0);
+        let test_project = logbook.projects.get("test").unwrap();
+        assert_eq!(test_project.logs.len(), 0);
+    }
+
+    #[test]
+    fn test_remove_project() {
+        let mut logbook = Logbook::new();
+        logbook.add_project("test");
+        logbook.add_log("test", "entry n1");
+        logbook.delete_project("test");
+        assert_eq!(logbook.projects.contains_key("test"), false);
     }
 }

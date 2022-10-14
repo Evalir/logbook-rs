@@ -1,8 +1,5 @@
-use std::{fs, io::Read};
-
+use logbook_rs as logbook;
 use structopt::StructOpt;
-
-const LOGBOOK_PATH: &str = "~/.logbook.json";
 
 #[derive(Debug, StructOpt)]
 enum SubCommands {
@@ -32,23 +29,6 @@ struct DeleteProjectOpts {
     name: String,
 }
 
-fn add_project(name: &str) {}
-
-fn add_log(project: &str, text: &str) {}
-
-fn delete_log(project: &str, id: i32) {}
-
-fn delete_project(name: &str) {}
-
-fn load_or_create_logbook() -> String {
-    let mut buffer = String::new();
-    fs::File::open(LOGBOOK_PATH)
-        .unwrap_or_else(|_| fs::File::create(LOGBOOK_PATH).unwrap())
-        .read_to_string(&mut buffer)
-        .expect("Could not read logbook");
-    buffer
-}
-
 fn main() {
-    println!("Hello, world!");
+    // println!("{:#?}", logbook::load_or_create_logbook());
 }
